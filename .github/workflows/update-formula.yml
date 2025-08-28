@@ -31,8 +31,8 @@ jobs:
           
           # Extract URLs and calculate SHA256
           echo "Extracting asset URLs..."
-          DARWIN_AMD64_URL=$(echo "$RELEASE_DATA" | jq -r '.assets[] | select(.name | contains("darwin-amd64")) | .browser_download_url')
-          DARWIN_ARM64_URL=$(echo "$RELEASE_DATA" | jq -r '.assets[] | select(.name | contains("darwin-arm64")) | .browser_download_url')
+          DARWIN_AMD64_URL=$(echo "$RELEASE_DATA" | jq -r '.assets[] | select(.name | contains("darwin-amd64") and (.name | contains(".sha256") | not)) | .browser_download_url')
+          DARWIN_ARM64_URL=$(echo "$RELEASE_DATA" | jq -r '.assets[] | select(.name | contains("darwin-arm64") and (.name | contains(".sha256") | not)) | .browser_download_url')
           
           if [ -z "$DARWIN_AMD64_URL" ] || [ -z "$DARWIN_ARM64_URL" ]; then
             echo "Error: Could not find Darwin binaries in release"

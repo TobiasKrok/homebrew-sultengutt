@@ -20,7 +20,7 @@ class Sultengutt < Formula
 
   def caveats
     <<~EOS
-      To set up Sultengutt, run:
+      To set up Sultengutt or reconfigure, run:
         sultengutt install
       
       To check status:
@@ -29,6 +29,10 @@ class Sultengutt < Formula
       To pause/resume reminders:
         sultengutt pause
         sultengutt resume
+      
+      ⚠️  IMPORTANT: Before uninstalling with Homebrew:
+        Run 'sultengutt uninstall' first to remove scheduled tasks and config files.
+        Then run 'brew uninstall sultengutt' to remove the application.
     EOS
   end
 

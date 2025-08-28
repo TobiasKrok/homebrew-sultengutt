@@ -1,0 +1,123 @@
+name: Update Homebrew Formula
+
+on:
+  repository_dispatch:
+    types: [update-formula]
+
+jobs:
+  update-formula:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout homebrew-sultengutt
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+      
+      - name: Get release info
+        id: release
+        run: |
+          VERSION="${{ github.event.client_payload.version }}"
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          echo "Processing release ${VERSION}..."
+          
+          # Get release data from GitHub API
+          echo "Fetching release data..."
+          RELEASE_DATA=$(curl -s https://api.github.com/repos/TobiasKrok/sultengutt/releases/tags/${VERSION})
+          
+          if echo "$RELEASE_DATA" | grep -q "Not Found"; then
+            echo "Error: Release ${VERSION} not found"
+            exit 1
+          fi
+          
+          # Extract URLs and calculate SHA256
+          echo "Extracting asset URLs..."
+          DARWIN_AMD64_URL=$(echo "$RELEASE_DATA" | jq -r '.assets[] | select(.name | contains("darwin-amd64")) | .browser_download_url')
+          DARWIN_ARM64_URL=$(echo "$RELEASE_DATA" | jq -r '.assets[] | select(.name | contains("darwin-arm64")) | .browser_download_url')
+          
+          if [ -z "$DARWIN_AMD64_URL" ] || [ -z "$DARWIN_ARM64_URL" ]; then
+            echo "Error: Could not find Darwin binaries in release"
+            echo "Available assets:"
+            echo "$RELEASE_DATA" | jq -r '.assets[].name'
+            exit 1
+          fi
+          
+          echo "Found URLs:"
+          echo "  AMD64: $DARWIN_AMD64_URL"
+          echo "  ARM64: $DARWIN_ARM64_URL"
+          
+          # Download and calculate SHA256
+          echo "Downloading and calculating checksums..."
+          curl -L "$DARWIN_AMD64_URL" -o darwin-amd64.tar.gz
+          curl -L "$DARWIN_ARM64_URL" -o darwin-arm64.tar.gz
+          
+          SHA256_AMD64=$(sha256sum darwin-amd64.tar.gz | cut -d' ' -f1)
+          SHA256_ARM64=$(sha256sum darwin-arm64.tar.gz | cut -d' ' -f1)
+          
+          echo "Checksums calculated:"
+          echo "  AMD64: $SHA256_AMD64"
+          echo "  ARM64: $SHA256_ARM64"
+          
+          echo "darwin_amd64_url=${DARWIN_AMD64_URL}" >> $GITHUB_OUTPUT
+          echo "darwin_arm64_url=${DARWIN_ARM64_URL}" >> $GITHUB_OUTPUT
+          echo "sha256_amd64=${SHA256_AMD64}" >> $GITHUB_OUTPUT
+          echo "sha256_arm64=${SHA256_ARM64}" >> $GITHUB_OUTPUT
+      
+      - name: Update Formula
+        run: |
+          echo "Generating new formula..."
+          cat > sultengutt.rb << EOF
+          class Sultengutt < Formula
+            desc "Cross-platform desktop reminder for ordering surprise dinners"
+            homepage "https://github.com/TobiasKrok/sultengutt"
+            version "${{ steps.release.outputs.version }}"
+            license "MIT"
+          
+            on_macos do
+              if Hardware::CPU.intel?
+                url "${{ steps.release.outputs.darwin_amd64_url }}"
+                sha256 "${{ steps.release.outputs.sha256_amd64 }}"
+              else
+                url "${{ steps.release.outputs.darwin_arm64_url }}"
+                sha256 "${{ steps.release.outputs.sha256_arm64 }}"
+              end
+            end
+          
+            def install
+              bin.install "sultengutt"
+            end
+          
+            def caveats
+              <<~EOS
+                To set up Sultengutt, run:
+                  sultengutt install
+                
+                To check status:
+                  sultengutt status
+                
+                ⚠️  IMPORTANT: Before uninstalling with Homebrew:
+                  Run 'sultengutt uninstall' first to remove scheduled tasks and config files.
+                  Then run 'brew uninstall sultengutt' to remove the application.
+              EOS
+            end
+          
+            test do
+              assert_match "Sultengutt", shell_output("#{bin}/sultengutt --help")
+            end
+          end
+          EOF
+          
+          echo "Formula updated successfully"
+      
+      - name: Commit and push
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          git add sultengutt.rb
+          
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "Update sultengutt to ${{ steps.release.outputs.version }}"
+            git push
+            echo "Formula updated and pushed successfully"
+          fi

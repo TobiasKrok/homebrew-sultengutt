@@ -22,10 +22,18 @@ jobs:
           
           # Get release data from GitHub API
           echo "Fetching release data..."
-          RELEASE_DATA=$(curl -s https://api.github.com/repos/TobiasKrok/sultengutt/releases/tags/${VERSION})
+          RELEASE_DATA=$(curl -s -H "Authorization: token ${{ secrets.PERSONAL_ACCESS_TOKEN }}" \
+            https://api.github.com/repos/TobiasKrok/sultengutt/releases/tags/${VERSION})
           
           if echo "$RELEASE_DATA" | grep -q "Not Found"; then
             echo "Error: Release ${VERSION} not found"
+            exit 1
+          fi
+          
+          # Debug: Show raw response for troubleshooting
+          if [ -z "$RELEASE_DATA" ] || echo "$RELEASE_DATA" | grep -q "Bad credentials\|API rate limit"; then
+            echo "Error: GitHub API access failed"
+            echo "Response: $RELEASE_DATA"
             exit 1
           fi
           

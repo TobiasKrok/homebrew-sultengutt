@@ -1,16 +1,16 @@
 class Sultengutt < Formula
-  desc "Remember to buy Suprise Dinner"
+  desc "Cross-platform desktop reminder for ordering surprise dinners"
   homepage "https://github.com/TobiasKrok/sultengutt"
-  version "0.1.0"
+  version "v0.1.3"
   license "MIT"
 
   on_macos do
     if Hardware::CPU.intel?
-      url "https://github.com/TobiasKrok/sultengutt/releases/download/v0.1.0/sultengutt-darwin-amd64.tar.gz"
-      sha256 "PLACEHOLDER_SHA256_AMD64"
+      url "https://github.com/TobiasKrok/sultengutt/releases/download/v0.1.3/sultengutt-darwin-amd64.tar.gz"
+      sha256 "7759fb71a79312d7cef748d88468a63f73531035338cf3db5686537c21fc43a9"
     else
-      url "https://github.com/TobiasKrok/sultengutt/releases/download/v0.1.0/sultengutt-darwin-arm64.tar.gz"
-      sha256 "PLACEHOLDER_SHA256_ARM64"
+      url "https://github.com/TobiasKrok/sultengutt/releases/download/v0.1.3/sultengutt-darwin-arm64.tar.gz"
+      sha256 "4bbd4a91f9f8aa469feb0a1f97ccaea369e3f066258b5d868ea32688595b18e6"
     end
   end
 
@@ -20,15 +20,11 @@ class Sultengutt < Formula
 
   def caveats
     <<~EOS
-      To set up Sultengutt or reconfigure, run:
+      To set up Sultengutt, run:
         sultengutt install
       
       To check status:
         sultengutt status
-      
-      To pause/resume reminders:
-        sultengutt pause
-        sultengutt resume
       
       ⚠️  IMPORTANT: Before uninstalling with Homebrew:
         Run 'sultengutt uninstall' first to remove scheduled tasks and config files.

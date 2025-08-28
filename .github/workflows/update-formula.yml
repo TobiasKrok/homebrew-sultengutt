@@ -22,18 +22,37 @@ jobs:
           
           # Get release data from GitHub API
           echo "Fetching release data..."
-          RELEASE_DATA=$(curl -s -H "Authorization: token ${{ secrets.PERSONAL_ACCESS_TOKEN }}" \
+          # Use Bearer instead of token for newer GitHub API
+          RELEASE_DATA=$(curl -s \
+            -H "Accept: application/vnd.github.v3+json" \
+            -H "Authorization: Bearer ${{ secrets.PERSONAL_ACCESS_TOKEN }}" \
             https://api.github.com/repos/TobiasKrok/sultengutt/releases/tags/${VERSION})
+          
+          # Debug: Check what we got back
+          echo "API Response first 500 chars:"
+          echo "$RELEASE_DATA" | head -c 500
+          echo ""
+          
+          # Check if response is valid JSON
+          if ! echo "$RELEASE_DATA" | jq -e . >/dev/null 2>&1; then
+            echo "Error: Invalid JSON response from GitHub API"
+            echo "Full response:"
+            echo "$RELEASE_DATA"
+            exit 1
+          fi
           
           if echo "$RELEASE_DATA" | grep -q "Not Found"; then
             echo "Error: Release ${VERSION} not found"
             exit 1
           fi
           
-          # Debug: Show raw response for troubleshooting
-          if [ -z "$RELEASE_DATA" ] || echo "$RELEASE_DATA" | grep -q "Bad credentials\|API rate limit"; then
-            echo "Error: GitHub API access failed"
-            echo "Response: $RELEASE_DATA"
+          if echo "$RELEASE_DATA" | grep -q "Bad credentials"; then
+            echo "Error: Bad credentials - check PERSONAL_ACCESS_TOKEN"
+            exit 1
+          fi
+          
+          if echo "$RELEASE_DATA" | grep -q "API rate limit"; then
+            echo "Error: GitHub API rate limit exceeded"
             exit 1
           fi
           

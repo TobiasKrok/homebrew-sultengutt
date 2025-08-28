@@ -1,16 +1,16 @@
 class Sultengutt < Formula
   desc "Cross-platform desktop reminder for ordering surprise dinners"
   homepage "https://github.com/TobiasKrok/sultengutt"
-  version "v0.1.3"
+  version "v0.1.4"
   license "MIT"
 
   on_macos do
     if Hardware::CPU.intel?
-      url "https://github.com/TobiasKrok/sultengutt/releases/download/v0.1.3/sultengutt-darwin-amd64.tar.gz"
-      sha256 "7759fb71a79312d7cef748d88468a63f73531035338cf3db5686537c21fc43a9"
+      url "https://github.com/TobiasKrok/sultengutt/releases/download/v0.1.4/sultengutt-darwin-amd64.tar.gz"
+      sha256 "b12fcc3a5a92c1c1d952ce0bd764e6911687edb481359ffd784f78bfd07599b0"
     else
-      url "https://github.com/TobiasKrok/sultengutt/releases/download/v0.1.3/sultengutt-darwin-arm64.tar.gz"
-      sha256 "4bbd4a91f9f8aa469feb0a1f97ccaea369e3f066258b5d868ea32688595b18e6"
+      url "https://github.com/TobiasKrok/sultengutt/releases/download/v0.1.4/sultengutt-darwin-arm64.tar.gz"
+      sha256 "84af8d47c1bc0eb80ad311d76aaf0db4ca7ae6d1ba940ebcd9b51d9c1d81dd55"
     end
   end
 

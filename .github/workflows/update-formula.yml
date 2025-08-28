@@ -22,24 +22,26 @@ jobs:
           
           # Get release data from GitHub API
           echo "Fetching release data..."
-          # Use Bearer instead of token for newer GitHub API
-          RELEASE_DATA=$(curl -s \
+          # Save to file to avoid shell variable issues with large JSON
+          curl -s \
             -H "Accept: application/vnd.github.v3+json" \
             -H "Authorization: Bearer ${{ secrets.PERSONAL_ACCESS_TOKEN }}" \
-            https://api.github.com/repos/TobiasKrok/sultengutt/releases/tags/${VERSION})
+            https://api.github.com/repos/TobiasKrok/sultengutt/releases/tags/${VERSION} \
+            > release_data.json
           
-          # Debug: Check what we got back
-          echo "API Response first 500 chars:"
-          echo "$RELEASE_DATA" | head -c 500
-          echo ""
+          # Debug: Check file size and validity
+          echo "Release data file size: $(wc -c < release_data.json) bytes"
           
           # Check if response is valid JSON
-          if ! echo "$RELEASE_DATA" | jq -e . >/dev/null 2>&1; then
+          if ! jq -e . release_data.json >/dev/null 2>&1; then
             echo "Error: Invalid JSON response from GitHub API"
-            echo "Full response:"
-            echo "$RELEASE_DATA"
+            echo "First 500 chars of response:"
+            head -c 500 release_data.json
             exit 1
           fi
+          
+          # Load data for checks
+          RELEASE_DATA=$(cat release_data.json)
           
           if echo "$RELEASE_DATA" | grep -q "Not Found"; then
             echo "Error: Release ${VERSION} not found"
@@ -58,13 +60,22 @@ jobs:
           
           # Extract URLs and calculate SHA256
           echo "Extracting asset URLs..."
-          DARWIN_AMD64_URL=$(echo "$RELEASE_DATA" | jq -r '.assets[] | select(.name | contains("darwin-amd64") and (.name | contains(".sha256") | not)) | .browser_download_url')
-          DARWIN_ARM64_URL=$(echo "$RELEASE_DATA" | jq -r '.assets[] | select(.name | contains("darwin-arm64") and (.name | contains(".sha256") | not)) | .browser_download_url')
+          
+          # Debug: Check assets structure
+          echo "Number of assets found:"
+          jq '.assets | length' release_data.json
+          
+          echo "Asset names:"
+          jq -r '.assets[].name' release_data.json || echo "Failed to extract asset names"
+          
+          # Extract URLs more carefully
+          DARWIN_AMD64_URL=$(jq -r '.assets[] | select(.name | test("darwin-amd64.*tar.gz$")) | .browser_download_url' release_data.json || echo "")
+          DARWIN_ARM64_URL=$(jq -r '.assets[] | select(.name | test("darwin-arm64.*tar.gz$")) | .browser_download_url' release_data.json || echo "")
           
           if [ -z "$DARWIN_AMD64_URL" ] || [ -z "$DARWIN_ARM64_URL" ]; then
             echo "Error: Could not find Darwin binaries in release"
             echo "Available assets:"
-            echo "$RELEASE_DATA" | jq -r '.assets[].name'
+            jq -r '.assets[].name' release_data.json
             exit 1
           fi
           

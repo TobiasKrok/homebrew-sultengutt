@@ -7,10 +7,10 @@ class Sultengutt < Formula
   on_macos do
     if Hardware::CPU.intel?
       url "https://github.com/TobiasKrok/sultengutt/releases/download/v0.1.4/sultengutt-darwin-amd64.tar.gz"
-      sha256 "b12fcc3a5a92c1c1d952ce0bd764e6911687edb481359ffd784f78bfd07599b0"
+      sha256 "09cf4b05b3c218165be8b9c1096b40b9aaf037c360ce35914175c6601e50c8cc"
     else
       url "https://github.com/TobiasKrok/sultengutt/releases/download/v0.1.4/sultengutt-darwin-arm64.tar.gz"
-      sha256 "84af8d47c1bc0eb80ad311d76aaf0db4ca7ae6d1ba940ebcd9b51d9c1d81dd55"
+      sha256 "dbabd72b39519452969b90fd178b81b63baf8119ae40ac07f2641fa9553adbbd"
     end
   end
 
